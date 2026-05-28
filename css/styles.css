@@ -199,22 +199,47 @@ button, input, select {
 }
 
 .search-form__submit {
-  position: relative;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  min-height: 52px; /* Fixed reasonable height */
-  margin-top: 6px;
+  height: 48px; /* Hard fixed height */
+  min-height: 48px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 0 20px;
   border: 0;
   border-radius: var(--radius);
   color: var(--ink);
   background: linear-gradient(135deg, var(--lime), var(--teal));
-  box-shadow: 0 15px 35px rgba(53, 221, 189, 0.2);
-  font-weight: 900;
-  font-size: 15px;
+  box-shadow: 0 10px 25px rgba(53, 221, 189, 0.2);
+  font-weight: 800;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.search-form__submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(53, 221, 189, 0.3);
+  filter: brightness(1.05);
+}
+
+.search-form__submit:active {
+  transform: translateY(0);
+}
+
+.search-form__submit-icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
 }
 
 .quick-search__query {
