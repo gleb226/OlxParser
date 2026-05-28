@@ -20,7 +20,16 @@ CATEGORY_PATHS = {
     "cars": "transport/legkovye-avtomobili",
     "phones": "elektronika/telefony-i-aksesuary/mobilnye-telefony-smartfony",
     "laptops": "elektronika/noutbuki-i-aksesuary/noutbuki",
+    "tablets": "elektronika/telefony-i-aksesuary/planshety-el-knigi",
+    "audio": "elektronika/audiotehnika",
+    "games": "elektronika/igry-i-igrovye-pristavki",
+    "appliances": "bytovaya-tehnika",
     "real_estate": "nedvizhimost/kvartiry",
+    "house_garden": "dom-i-sad",
+    "furniture": "dom-i-sad/mebel",
+    "fashion": "moda-i-stil",
+    "kids": "detskiy-mir",
+    "sports": "hobbi-otdyh-i-sport/sport-otdyh",
     "jobs": "rabota",
 }
 
