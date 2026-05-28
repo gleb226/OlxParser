@@ -117,13 +117,14 @@ const enhanceSelect = (select) => {
       const term = searchInput.value.toLowerCase().trim();
       let found = false;
       [...menu.querySelectorAll(".select-control__option")].forEach(opt => {
-        const matches = opt.textContent.toLowerCase().includes(term);
+        if (opt.classList.contains("select-control__option--custom")) return;
+        const matches = term.length >= 2 ? opt.textContent.toLowerCase().includes(term) : true;
         opt.hidden = !matches;
-        if (matches) found = true;
+        if (matches && term.length >= 2) found = true;
       });
 
       let customOpt = menu.querySelector(".select-control__option--custom");
-      if (term && !found) {
+      if (term.length >= 2 && !found) {
         if (!customOpt) {
           customOpt = document.createElement("button");
           customOpt.className = "select-control__option select-control__option--custom";
@@ -131,7 +132,7 @@ const enhanceSelect = (select) => {
           customOpt.setAttribute("role", "option");
           menu.appendChild(customOpt);
         }
-        customOpt.textContent = `Використати: ${searchInput.value}`;
+        customOpt.textContent = `Шукати в місті: ${searchInput.value}`;
         customOpt.dataset.value = "custom:" + searchInput.value;
         customOpt.hidden = false;
         
@@ -367,11 +368,21 @@ const renderResults = (items) => {
     node.querySelector(".result-card__converted").textContent = details.join(" • ");
 
     const img = node.querySelector(".result-card__image");
+    const placeholder = node.querySelector(".result-card__placeholder");
     if (item.image) {
       img.src = imageSource(item.image);
-      img.onload = () => node.querySelector(".result-card__placeholder").hidden = true;
+      img.style.opacity = "0";
+      img.onload = () => {
+        placeholder.style.display = "none";
+        img.style.opacity = "1";
+      };
+      img.onerror = () => {
+        img.remove();
+        placeholder.style.display = "flex";
+      };
     } else {
       img.remove();
+      placeholder.style.display = "flex";
     }
     results.appendChild(node);
   });

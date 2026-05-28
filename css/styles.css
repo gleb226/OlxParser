@@ -309,17 +309,17 @@ select {
   top: calc(100% + 12px);
   left: -16px;
   right: -16px;
-  z-index: 100;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 260px;
+  max-height: 280px;
   padding: 8px;
   overflow-y: auto;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius);
-  background: #0d1615;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  background: #081110; /* Solid deep background */
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.9);
   opacity: 0;
   pointer-events: none;
   transform: translateY(-10px) scale(0.95);
@@ -336,8 +336,10 @@ select {
   padding: 4px 4px 8px;
   position: sticky;
   top: 0;
-  background: #0d1615;
-  z-index: 1;
+  background: #081110;
+  z-index: 10;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 4px;
 }
 
 .select-control__input {
