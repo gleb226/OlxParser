@@ -1,7 +1,7 @@
-from __future__ import annotations
-
 import json
 import re
+import time
+import random
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass, replace
 from functools import lru_cache
@@ -154,11 +154,12 @@ STOP_WORDS_BY_CATEGORY = {
     ),
 }
 
-USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/124.0 Safari/537.36"
-)
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0",
+]
 
 
 @dataclass
@@ -231,17 +232,26 @@ def parse_optional_price(value: str | None) -> int | None:
 
 
 def _download(url: str) -> str:
-    request = Request(
-        url,
-        headers={
-            "User-Agent": USER_AGENT,
-            "Accept-Language": "uk-UA,uk;q=0.9,en;q=0.6",
-        },
-    )
+    time.sleep(random.uniform(0.15, 0.4))
+    
+    headers = {
+        "User-Agent": random.choice(USER_AGENTS),
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "Accept-Language": "uk-UA,uk;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Referer": "https://www.olx.ua/",
+        "Sec-Ch-Ua": '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": '"Windows"',
+        "Upgrade-Insecure-Requests": "1",
+    }
+    
+    request = Request(url, headers=headers)
     try:
-        with urlopen(request, timeout=16) as response:
+        with urlopen(request, timeout=18) as response:
             return response.read().decode("utf-8", errors="replace")
     except HTTPError as exc:
+        if exc.code == 403:
+            raise RuntimeError("OLX тимчасово заблокував доступ (403). Спробуйте за хвилину.") from exc
         raise RuntimeError(f"Сервер OLX повернув помилку {exc.code}.") from exc
     except URLError as exc:
         raise RuntimeError("Не вдалося підключитися до OLX. Перевірте інтернет.") from exc
@@ -300,7 +310,7 @@ def _city_slug(value: str) -> str:
 def _enrich_listings(listings: list[Listing]) -> list[Listing]:
     if not listings:
         return []
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=3) as executor:
         return list(executor.map(_enrich_listing, listings))
 
 
@@ -527,6 +537,25 @@ def _normalize_image_url(value: str) -> str:
 
 
 def _pick_seller_type(item: dict) -> str:
+    user = item.get("user")
+    if isinstance(user, dict):
+        is_bus = user.get("is_business")
+        if is_bus is True: return "business"
+        if is_bus is False: return "private"
+
+    params = item.get("parameters")
+    if isinstance(params, list):
+        for p in params:
+            if p.get("key") == "private_business":
+                val = p.get("value")
+                if isinstance(val, dict):
+                    k = val.get("key")
+                    if k == "private": return "private"
+                    if k == "business": return "business"
+                elif isinstance(val, str):
+                    if val == "private": return "private"
+                    if val == "business": return "business"
+
     explicit = str(
         item.get("private_business")
         or item.get("sellerType")
@@ -882,7 +911,7 @@ def _nbu_rates() -> dict[str, float]:
 
 
 def _json_url(url: str, timeout: int) -> object:
-    request = Request(url, headers={"User-Agent": USER_AGENT})
+    request = Request(url, headers={"User-Agent": random.choice(USER_AGENTS)})
     with urlopen(request, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8", errors="replace"))
 
