@@ -204,7 +204,7 @@ button, input, select {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  min-height: 60px;
+  min-height: 52px; /* Fixed reasonable height */
   margin-top: 6px;
   border: 0;
   border-radius: var(--radius);
@@ -212,9 +212,24 @@ button, input, select {
   background: linear-gradient(135deg, var(--lime), var(--teal));
   box-shadow: 0 15px 35px rgba(53, 221, 189, 0.2);
   font-weight: 900;
-  font-size: 16px;
+  font-size: 15px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.quick-search__query {
+  font-weight: 800;
+  font-size: 14px;
+  color: #ffffff !important; /* Force white text */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-search__meta {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.4;
 }
 
 .search-form__submit:hover {
