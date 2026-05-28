@@ -306,24 +306,24 @@ select {
 
 .select-control__menu {
   position: absolute;
-  top: calc(100% + 12px);
-  left: -16px;
-  right: -16px;
-  z-index: 1000;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 9999;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  max-height: 280px;
+  gap: 2px;
+  max-height: 300px; /* Fixed height for scrolling */
+  overflow-y: auto;   /* Enable vertical scroll */
   padding: 8px;
-  overflow-y: auto;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(200, 255, 74, 0.3);
   border-radius: var(--radius);
-  background: #081110; /* Solid deep background */
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.9);
+  background: #0d1615 !important; /* Force fully opaque background */
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
   opacity: 0;
   pointer-events: none;
-  transform: translateY(-10px) scale(0.95);
-  transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+  transform: translateY(-10px) scale(0.98);
+  transition: all 0.2s ease;
 }
 
 .select-control--open .select-control__menu {
@@ -333,13 +333,28 @@ select {
 }
 
 .select-control__search {
-  padding: 4px 4px 8px;
+  padding: 4px;
   position: sticky;
   top: 0;
-  background: #081110;
+  background: #0d1615; /* Match opaque background */
   z-index: 10;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom scrollbar for dropdown to ensure it's usable but clean */
+.select-control__menu::-webkit-scrollbar {
+  display: block;
+  width: 6px;
+}
+
+.select-control__menu::-webkit-scrollbar-thumb {
+  background: rgba(200, 255, 74, 0.2);
+  border-radius: 10px;
+}
+
+.select-control__menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(200, 255, 74, 0.4);
 }
 
 .select-control__input {
