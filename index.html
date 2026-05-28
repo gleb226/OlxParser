@@ -3,109 +3,175 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OLX Parser</title>
+  <title>OLX Finder</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <main class="shell">
-    <section class="hero" aria-labelledby="page-title">
-      <div class="hero__visual" aria-hidden="true">
-        <div class="glass glass--one"></div>
-        <div class="glass glass--two"></div>
-        <div class="radar">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-        <div class="listing listing--one">
-          <strong>iPhone 13</strong>
-          <span>18 400 грн</span>
-        </div>
-        <div class="listing listing--two">
-          <strong>PlayStation 5</strong>
-          <span>16 900 грн</span>
-        </div>
-        <div class="listing listing--three">
-          <strong>MacBook Air</strong>
-          <span>29 500 грн</span>
-        </div>
+  <main class="app">
+    <header class="app__header">
+      <div class="app__title-group">
+        <p class="app__eyebrow">OLX Smart Search</p>
+        <h1 class="app__title">Знайди саме те, що шукаєш</h1>
       </div>
-
-      <div class="hero__content">
-        <p class="eyebrow">OLX search parser</p>
-        <h1 id="page-title">Знайди найкращі оголошення без рекламного шуму.</h1>
-        <p class="hero__text">
-          Введи назву товару, діапазон ціни або прочерк, обери сортування і отримай чистий список результатів.
-        </p>
+      <div class="app__status">
+        <span class="app__status-dot" id="statusDot"></span>
+        <span class="app__status-text" id="statusText">Готово до пошуку</span>
       </div>
-    </section>
+    </header>
 
-    <section class="workspace" aria-label="Панель пошуку">
-      <form class="search-panel" id="searchForm">
-        <label class="field field--product">
-          <span>Товар</span>
-          <input id="query" name="query" type="text" placeholder="Наприклад: iPhone 13" required autocomplete="off">
-        </label>
+    <section class="workspace" aria-label="Панель фільтрів">
+      <aside class="workspace__sidebar">
+        <form class="search-form" id="searchForm">
+          <label class="search-form__field search-form__field--wide">
+            <span class="search-form__label">Назва товару або послуги</span>
+            <input class="search-form__input" id="query" name="query" type="text" placeholder="Наприклад: iPhone 15 Pro Max" required autocomplete="off">
+          </label>
 
-        <label class="field">
-          <span>Мін. ціна</span>
-          <input id="minPrice" name="min_price" type="text" inputmode="numeric" placeholder="-">
-        </label>
+          <div class="search-form__grid">
+            <label class="search-form__field">
+              <span class="search-form__label">Ціна від</span>
+              <input class="search-form__input" id="minPrice" name="min_price" type="text" inputmode="numeric" placeholder="0">
+            </label>
 
-        <label class="field">
-          <span>Макс. ціна</span>
-          <input id="maxPrice" name="max_price" type="text" inputmode="numeric" placeholder="-">
-        </label>
+            <label class="search-form__field">
+              <span class="search-form__label">Ціна до</span>
+              <input class="search-form__input" id="maxPrice" name="max_price" type="text" inputmode="numeric" placeholder="∞">
+            </label>
+          </div>
 
-        <label class="field">
-          <span>Сортування</span>
-          <select id="sortOrder" name="sort">
-            <option value="asc">Від дешевих</option>
-            <option value="desc">Від дорогих</option>
-          </select>
-        </label>
+          <label class="search-form__field search-form__field--select">
+            <span class="search-form__label">Валюта для розрахунку</span>
+            <select class="search-form__select" id="priceCurrency" name="price_currency">
+              <option value="UAH">Гривня (₴)</option>
+              <option value="USD">Долар ($)</option>
+              <option value="EUR">Євро (€)</option>
+            </select>
+          </label>
 
-        <button class="submit" type="submit">
-          <span>Сканувати</span>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M5 12h14m-6-6 6 6-6 6"></path>
-          </svg>
-        </button>
-      </form>
+          <label class="search-form__field search-form__field--select">
+            <span class="search-form__label">Категорія оголошень</span>
+            <select class="search-form__select" id="category" name="category">
+              <option value="all">Усі розділи</option>
+              <option value="cars">Легкові автомобілі</option>
+              <option value="phones">Мобільні телефони</option>
+              <option value="laptops">Ноутбуки та комп'ютери</option>
+              <option value="real_estate">Нерухомість</option>
+              <option value="jobs">Робота</option>
+            </select>
+          </label>
 
-      <div class="status-bar">
-        <div>
-          <span class="status-dot" id="statusDot"></span>
-          <span id="statusText">Готово до пошуку</span>
+          <label class="search-form__field search-form__field--select">
+            <span class="search-form__label">Локація (місто)</span>
+            <select class="search-form__select" id="city" name="city">
+              <option value="all">Вся Україна</option>
+              <option value="kyiv">Київ</option>
+              <option value="kharkiv">Харків</option>
+              <option value="odesa">Одеса</option>
+              <option value="dnipro">Дніпро</option>
+              <option value="lviv">Львів</option>
+              <option value="zaporizhzhia">Запоріжжя</option>
+              <option value="vinnytsia">Вінниця</option>
+              <option value="cherkasy">Черкаси</option>
+              <option value="chernihiv">Чернігів</option>
+              <option value="chernivtsi">Чернівці</option>
+              <option value="ivano_frankivsk">Івано-Франківськ</option>
+              <option value="kropyvnytskyi">Кропивницький</option>
+              <option value="lutsk">Луцьк</option>
+              <option value="mykolaiv">Миколаїв</option>
+              <option value="poltava">Полтава</option>
+              <option value="rivne">Рівне</option>
+              <option value="sumy">Суми</option>
+              <option value="ternopil">Тернопіль</option>
+              <option value="uzhhorod">Ужгород</option>
+              <option value="khmelnytskyi">Хмельницький</option>
+              <option value="zhytomyr">Житомир</option>
+            </select>
+          </label>
+
+          <div class="search-form__grid">
+            <label class="search-form__field search-form__field--select">
+              <span class="search-form__label">Тип оголошення</span>
+              <select class="search-form__select" id="sellerType" name="seller_type">
+                <option value="all">Усі автори</option>
+                <option value="private">Приватні особи</option>
+                <option value="business">Бізнес / Компанії</option>
+              </select>
+            </label>
+
+            <label class="search-form__field search-form__field--select">
+              <span class="search-form__label">Сортування</span>
+              <select class="search-form__select" id="sortOrder" name="sort">
+                <option value="asc">Спочатку дешевші</option>
+                <option value="desc">Спочатку дорожчі</option>
+              </select>
+            </label>
+          </div>
+
+          <button class="search-form__submit" type="submit">
+            <span class="search-form__submit-text">Почати пошук</span>
+            <svg class="search-form__submit-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 12h14m-6-6 6 6-6 6"></path>
+            </svg>
+          </button>
+        </form>
+
+        <section class="quick-searches" aria-label="Історія та приклади">
+          <div class="quick-searches__header">
+            <span class="quick-searches__title">Останні запити</span>
+            <button class="quick-searches__clear" id="clearRecent" type="button">Очистити</button>
+          </div>
+          <div class="quick-searches__list" id="recentSearches"></div>
+        </section>
+      </aside>
+
+      <section class="workspace__content">
+        <div class="results-header">
+          <div class="results-header__copy">
+            <p class="app__eyebrow">Знайдені оголошення</p>
+            <h2 class="results-header__title">Актуальні пропозиції з урахуванням курсу валют</h2>
+          </div>
+          <strong class="results-header__count" id="resultCount">0 знайдено</strong>
         </div>
-        <span id="resultCount">0 результатів</span>
-      </div>
 
-      <section class="results" id="results" aria-live="polite">
-        <article class="empty-state">
-          <div class="empty-state__icon"></div>
-          <h2>Почни з назви товару</h2>
-          <p>Результати з’являться тут одразу після парсингу.</p>
-        </article>
+        <section class="results" id="results" aria-live="polite">
+          <article class="empty-state">
+            <div class="empty-state__icon"></div>
+            <h2 class="empty-state__title">Готовий до нового пошуку?</h2>
+            <p class="empty-state__text">Використовуй фільтри зліва, щоб знайти найкращу ціну. Ми автоматично конвертуємо валюту та відфільтруємо спам.</p>
+          </article>
+        </section>
       </section>
     </section>
   </main>
 
+  <template id="recentTemplate">
+    <button class="quick-search" type="button">
+      <span class="quick-search__query"></span>
+      <span class="quick-search__meta"></span>
+    </button>
+  </template>
+
   <template id="resultTemplate">
     <article class="result-card">
-      <a class="result-card__image" target="_blank" rel="noopener noreferrer">
-        <img alt="">
+      <a class="result-card__media" target="_blank" rel="noopener noreferrer">
+        <img class="result-card__image" alt="" loading="lazy">
+        <span class="result-card__placeholder">Фото не знайдено</span>
       </a>
       <div class="result-card__body">
-        <div>
-          <a class="result-card__title" target="_blank" rel="noopener noreferrer"></a>
-          <p class="result-card__meta"></p>
+        <div class="result-card__chips">
+          <span class="result-card__seller"></span>
+          <span class="result-card__currency"></span>
         </div>
+        <a class="result-card__title" target="_blank" rel="noopener noreferrer"></a>
+        <p class="result-card__meta"></p>
         <div class="result-card__footer">
-          <strong class="result-card__price"></strong>
+          <div class="result-card__pricebox">
+            <strong class="result-card__price"></strong>
+            <span class="result-card__converted"></span>
+          </div>
           <a class="result-card__link" target="_blank" rel="noopener noreferrer">Відкрити</a>
         </div>
       </div>
