@@ -527,7 +527,6 @@ def _normalize_image_url(value: str) -> str:
 
 
 def _pick_seller_type(item: dict) -> str:
-    text = json.dumps(item, ensure_ascii=False).lower()
     explicit = str(
         item.get("private_business")
         or item.get("sellerType")
@@ -535,14 +534,20 @@ def _pick_seller_type(item: dict) -> str:
         or item.get("type")
         or ""
     ).lower()
-    if explicit in {"private", "person", "owner"}:
+    
+    if explicit in {"private", "person", "owner", "private_person"}:
         return "private"
-    if explicit in {"business", "company", "professional", "dealer"}:
+    if explicit in {"business", "company", "professional", "dealer", "shop"}:
         return "business"
-    if any(token in text for token in ("компанія", "бізнес", "дилер", "магазин", "фірма", "марка")):
-        return "business"
-    if any(token in text for token in ("приват", "власник")):
+
+    text = json.dumps(item, ensure_ascii=False).lower()
+    if any(token in text for token in ("бізнес", "компанія", "магазин", "дилер", "фірма")):
+        if "приват" not in text:
+            return "business"
+            
+    if any(token in text for token in ("приват", "власник", "господар")):
         return "private"
+        
     return "unknown"
 
 
@@ -577,10 +582,18 @@ def _detail_image(html: str) -> str:
 
 
 def _detail_seller_type(html: str) -> str:
+    data = _next_data(html)
+    if data is not None:
+        for item in _walk_dicts(data):
+            st = _pick_seller_type(item)
+            if st != "unknown":
+                return st
+
     clean = _strip_tags(html).lower()
-    if any(token in clean for token in ("компанія", "бізнес", "магазин", "дилер", "фірма")):
-        return "business"
-    if any(token in clean for token in ("приват", "власник")):
+    if any(token in clean for token in ("бізнес", "компанія", "магазин", "дилер", "фірма")):
+        if "приват" not in clean:
+            return "business"
+    if any(token in clean for token in ("приват", "власник", "господар")):
         return "private"
     return ""
 
