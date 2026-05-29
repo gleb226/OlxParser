@@ -52,6 +52,9 @@ async def search(
         )
         return {"items": items}
     except Exception as exc:
+        import traceback
+        print(f"ERROR in /api/search: {exc}")
+        traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(exc))
 
 @app.get("/api/details")

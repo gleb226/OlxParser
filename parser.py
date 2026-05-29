@@ -105,7 +105,7 @@ async def search_olx(
     if not query.strip(): raise ValueError("Вкажіть назву для пошуку.")
     city_filter = _resolve_city(city, city_query)
 
-    async with httpx.AsyncClient(timeout=18, follow_redirects=True, http2=True) as client:
+    async with httpx.AsyncClient(timeout=18, follow_redirects=True) as client:
         try:
             html = await _download(client, _build_search_url(query.strip(), seller_type, category, city_filter["slug"]))
         except RuntimeError:
@@ -135,7 +135,7 @@ async def search_olx(
     return results
 
 async def get_listing_details(url: str) -> dict:
-    async with httpx.AsyncClient(timeout=20, follow_redirects=True, http2=True) as client:
+    async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
         html = await _download(client, url)
         
     data = _next_data(html)
@@ -186,32 +186,36 @@ def parse_optional_price(value: str | None) -> int | None:
 
 async def _download(client: httpx.AsyncClient, url: str) -> str:
     # Use randomized delays and full set of browser headers to bypass CloudFront 403
-    await asyncio.sleep(random.uniform(0.4, 1.2))
+    await asyncio.sleep(random.uniform(0.5, 1.5))
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
         "Accept-Language": "uk-UA,uk;q=0.9,en-US;q=0.8",
-        "Accept-Encoding": "gzip, deflate, br",
         "Referer": "https://www.olx.ua/",
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1",
+        "Sec-Ch-Ua": '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": '"Windows"',
         "Sec-Fetch-Dest": "document",
         "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Site": "none",
         "Sec-Fetch-User": "?1",
+        "Cache-Control": "max-age=0",
     }
     try:
         r = await client.get(url, headers=headers)
         if r.status_code == 403:
-            await asyncio.sleep(random.uniform(2.0, 4.0))
+            await asyncio.sleep(random.uniform(3.0, 5.0))
             headers["User-Agent"] = random.choice(USER_AGENTS)
+            headers["Sec-Fetch-Site"] = "same-origin"
             r = await client.get(url, headers=headers)
             if r.status_code == 403:
-                raise RuntimeError("OLX тимчасово обмежив доступ (403). Спробуйте через пару хвилин.")
+                raise RuntimeError("OLX тимчасово обмежив доступ (403). Спробуйте пізніше.")
         r.raise_for_status()
         return r.text
     except Exception as e:
-        if "403" in str(e): raise RuntimeError("Блокування OLX (403). Зменшіть частоту запитів.")
+        if "403" in str(e): raise RuntimeError("Блокування OLX (403).")
         raise RuntimeError(f"Помилка з'єднання: {str(e)}")
 
 def _build_search_url(query: str, seller_type: str, category: str, city_slug: str) -> str:
