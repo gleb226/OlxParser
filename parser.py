@@ -332,6 +332,22 @@ def _pick_seller_type(item: dict) -> str:
     if any(x in explicit for x in ("business", "company", "shop")): return "business"
     return "unknown"
 
+def _extract_fallback(html: str) -> list[Listing]:
+    listings, seen = [], set()
+    for match in re.finditer(r'href="([^"]*/(?:d/uk/)?obyavlenie/[^"]+)"', html):
+        url = _clean_listing_url(_absolute_url(unescape(match.group(1))))
+        if url in seen: continue
+        seen.add(url)
+        block = html[match.start():match.start()+5000]
+        listings.append(Listing(title=_fallback_title(block), 
+                               price_text=_fallback_price(block),
+                               price=None, currency="UAH", price_uah=None, url=url, 
+                               image=_fallback_image(block),
+                               location=_fallback_location(block),
+                               date=_fallback_date(block),
+                               seller_type="unknown"))
+    return listings
+
 def _fallback_title(block: str) -> str:
     m = re.search(r'alt="([^"]+)"', block) or re.search(r"<h[3-6][^>]*>(.*?)</h", block, re.S)
     return _strip_tags(m.group(1)) if m else ""
@@ -345,7 +361,11 @@ def _fallback_image(block: str) -> str:
     return _normalize_image_url(m.group(1)) if m else ""
 
 def _fallback_location(block: str) -> str:
-    return "" # Simplified
+    return ""
+
+def _fallback_date(block: str) -> str:
+    m = re.search(rf"(сьогодні|вчора|\d{{1,2}}\s+(?:січня|лютого|травня|грудня))", _strip_tags(block), re.I)
+    return m.group(1).strip() if m else ""
 
 def _fallback_description(html: str) -> str:
     m = re.search(r'data-testimonial-id="ad_description"[^>]*>(.*?)</div>', html, re.S) or \
