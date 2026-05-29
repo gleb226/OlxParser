@@ -32,27 +32,11 @@ CATEGORY_PATHS = {
 
 CITY_SLUGS = {
     "all": "",
-    "kyiv": "kiev",
-    "kharkiv": "kharkov",
-    "odesa": "odessa",
-    "dnipro": "dnepr",
-    "lviv": "lvov",
-    "zaporizhzhia": "zaporozhe",
-    "vinnytsia": "vinnitsa",
-    "cherkasy": "cherkassy",
-    "chernihiv": "chernigov",
-    "chernivtsi": "chernovtsy",
-    "ivano_frankivsk": "ivano-frankovsk",
-    "kropyvnytskyi": "kirovograd",
-    "lutsk": "lutsk",
-    "mykolaiv": "nikolaev",
-    "poltava": "poltava",
-    "rivne": "rovno",
-    "sumy": "sumy",
-    "ternopil": "ternopol",
-    "uzhhorod": "uzhgorod",
-    "khmelnytskyi": "hmelnitskiy",
-    "zhytomyr": "zhitomir",
+    "kyiv": "kiev", "kharkiv": "kharkov", "odesa": "odessa", "dnipro": "dnepr", "lviv": "lvov",
+    "zaporizhzhia": "zaporozhe", "vinnytsia": "vinnitsa", "cherkasy": "cherkassy", "chernihiv": "chernigov",
+    "chernivtsi": "chernovtsy", "ivano_frankivsk": "ivano-frankovsk", "kropyvnytskyi": "kirovograd",
+    "lutsk": "lutsk", "mykolaiv": "nikolaev", "poltava": "poltava", "rivne": "rovno", "sumy": "sumy",
+    "ternopil": "ternopol", "uzhhorod": "uzhgorod", "khmelnytskyi": "hmelnitskiy", "zhytomyr": "zhitomir",
 }
 
 CITY_NAMES = {
@@ -79,56 +63,15 @@ CITY_NAMES = {
     "zhytomyr": ("житомир", "zhytomyr", "zhitomir"),
 }
 
-CITY_ALIASES = {
-    token: slug
-    for slug, tokens in CITY_NAMES.items()
-    for token in tokens
-}
-CITY_ALIASES.update(
-    {
-        "біла церква": "belaya-tserkov",
-        "белая церковь": "belaya-tserkov",
-        "bila tserkva": "belaya-tserkov",
-        "bila-tserkva": "belaya-tserkov",
-        "кременчук": "kremenchug",
-        "kremenchuk": "kremenchug",
-        "мукачево": "mukachevo",
-        "мукачеве": "mukachevo",
-        "mukachevo": "mukachevo",
-        "бровари": "brovary",
-        "brovary": "brovary",
-        "бориспіль": "borispol",
-        "борисполь": "borispol",
-        "boryspil": "borispol",
-        "кам'янець-подільський": "kamenets-podolskiy",
-        "камянець подільський": "kamenets-podolskiy",
-        "каменец-подольский": "kamenets-podolskiy",
-        "kolomyia": "kolomyya",
-        "коломия": "kolomyya",
-        "дрогобич": "drogobych",
-        "drogobych": "drogobych",
-        "ізмаїл": "izmail",
-        "измаил": "izmail",
-        "izmail": "izmail",
-    }
-)
-
-STOP_WORDS_BY_CATEGORY = {
-    "cars": (
-        "чохол", "коврик", "килимок", "запчаст", "шина", "диск", "фара", "бампер", "розбор", "комплект", "магнітола", "акумулятор",
-    ),
-    "phones": (
-        "чохол", "стекло", "скло", "кабель", "заряд", "навушник", "запчаст", "акумулятор", "корпус", "плівка",
-    ),
-    "laptops": (
-        "заряд", "блок живлення", "чохол", "сумка", "клавіатура", "матриця", "запчаст",
-    ),
-}
+CITY_ALIASES = {token: slug for slug, tokens in CITY_NAMES.items() for token in tokens}
+CITY_ALIASES.update({
+    "біла церква": "belaya-tserkov", "кременчук": "kremenchug", "мукачево": "mukachevo",
+    "бровари": "brovary", "бориспіль": "borispol", "кам'янець-подільський": "kamenets-podolskiy",
+})
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0",
 ]
 
@@ -158,54 +101,47 @@ async def search_olx(
     city_query: str = "",
     price_currency: str = "UAH",
     limit: int = DEFAULT_LIMIT,
-) -> list[dict[str, str | int | None]]:
-    if not query.strip():
-        raise ValueError("Вкажіть назву для пошуку.")
-
+) -> list[dict]:
+    if not query.strip(): raise ValueError("Вкажіть назву для пошуку.")
     city_filter = _resolve_city(city, city_query)
 
-    async with httpx.AsyncClient(timeout=18, follow_redirects=True) as client:
+    async with httpx.AsyncClient(timeout=18, follow_redirects=True, http2=True) as client:
         try:
             html = await _download(client, _build_search_url(query.strip(), seller_type, category, city_filter["slug"]))
         except RuntimeError:
-            if category == "all" and not city_filter["slug"]:
-                raise
-            try:
-                html = await _download(client, _build_search_url(query.strip(), seller_type, "all", city_filter["slug"]))
-            except RuntimeError:
-                html = await _download(client, _build_search_url(query.strip(), seller_type, category, ""))
+            if category == "all" and not city_filter["slug"]: raise
+            try: html = await _download(client, _build_search_url(query.strip(), seller_type, "all", city_filter["slug"]))
+            except RuntimeError: html = await _download(client, _build_search_url(query.strip(), seller_type, category, ""))
 
         listings = _extract_from_next_data(html) or _extract_fallback(html)
-        listings = await _enrich_listings(client, listings[: limit * 2])
+        # ENRICHMENT REMOVED during search for maximum speed and to avoid 403 blocks
     
     listings = _filter_by_category_url(listings, category)
     listings = _filter_by_relevance(listings, query, category)
     listings = _filter_by_city(listings, city_filter["tokens"])
 
-    min_price_uah = await _convert_to_uah(min_price, price_currency)
-    max_price_uah = await _convert_to_uah(max_price, price_currency)
-    filtered = _filter_by_price(listings, min_price_uah, max_price_uah)
-    
+    min_p_uah = await _convert_to_uah(min_price, price_currency)
+    max_p_uah = await _convert_to_uah(max_price, price_currency)
+    filtered = _filter_by_price(listings, min_p_uah, max_p_uah)
     filtered = _filter_by_seller_type(filtered, seller_type)
 
     reverse = sort == "desc"
-    filtered.sort(key=lambda item: item.price_uah if item.price_uah is not None else 10**12, reverse=reverse)
-    return [await _format_listing(item, price_currency) for item in filtered[:limit]]
+    filtered.sort(key=lambda x: x.price_uah if x.price_uah is not None else (10**12 if not reverse else -1), reverse=reverse)
+    
+    results = []
+    for item in filtered[:limit]:
+        if item.price_uah is None: item.price_uah = await _convert_to_uah(item.price, item.currency)
+        results.append(await _format_listing(item, price_currency))
+    return results
 
 async def get_listing_details(url: str) -> dict:
-    async with httpx.AsyncClient(timeout=18, follow_redirects=True) as client:
+    async with httpx.AsyncClient(timeout=20, follow_redirects=True, http2=True) as client:
         html = await _download(client, url)
         
     data = _next_data(html)
     if not data:
-        return {
-            "description": _fallback_description(html),
-            "parameters": [],
-            "title": _fallback_title(html),
-            "price_text": _fallback_price(html),
-            "url": url,
-            "images": [_fallback_image(html)]
-        }
+        return {"description": _fallback_description(html), "parameters": [], "title": _fallback_title(html), 
+                "price_text": _fallback_price(html), "url": url, "images": [_fallback_image(html)]}
 
     ad_data = None
     for item in _walk_dicts(data):
@@ -215,18 +151,13 @@ async def get_listing_details(url: str) -> dict:
             
     if not ad_data:
         for item in _walk_for_ads(data):
-            if _clean_listing_url(_absolute_url(item.get("url", ""))) == _clean_listing_url(url):
+            if _clean_listing_url(_absolute_url(str(item.get("url") or ""))) == _clean_listing_url(url):
                 ad_data = item
                 break
 
     if not ad_data:
-        return {
-            "description": _fallback_description(html),
-            "parameters": [],
-            "url": url,
-            "title": _fallback_title(html),
-            "price_text": _fallback_price(html)
-        }
+        return {"description": _fallback_description(html), "parameters": [], "url": url, 
+                "title": _fallback_title(html), "price_text": _fallback_price(html)}
 
     params = []
     if "parameters" in ad_data:
@@ -246,41 +177,43 @@ async def get_listing_details(url: str) -> dict:
         "url": url
     }
 
-def parse_optional_price(value: str | None) -> int | None:
-    if value is None: return None
-    cleaned = re.sub(r"\s+", "", value.strip())
-    if cleaned in {"", "-"}: return None
-    if not cleaned.isdigit(): raise ValueError("Ціна має бути числом.")
-    return int(cleaned)
-
 async def _download(client: httpx.AsyncClient, url: str) -> str:
-    await asyncio.sleep(random.uniform(0.01, 0.05))
+    # Use randomized delays and full set of browser headers to bypass CloudFront 403
+    await asyncio.sleep(random.uniform(0.4, 1.2))
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-        "Accept-Language": "uk-UA,uk;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "uk-UA,uk;q=0.9,en-US;q=0.8",
+        "Accept-Encoding": "gzip, deflate, br",
         "Referer": "https://www.olx.ua/",
+        "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-User": "?1",
     }
     try:
-        response = await client.get(url, headers=headers)
-        if response.status_code == 403:
-            raise RuntimeError("OLX тимчасово заблокував доступ (403). Спробуйте за хвилину.")
-        response.raise_for_status()
-        return response.text
-    except httpx.HTTPStatusError as exc:
-        raise RuntimeError(f"Сервер OLX повернув помилку {exc.response.status_code}.") from exc
-    except httpx.RequestError as exc:
-        raise RuntimeError("Не вдалося підключитися до OLX. Перевірте інтернет.") from exc
+        r = await client.get(url, headers=headers)
+        if r.status_code == 403:
+            await asyncio.sleep(random.uniform(2.0, 4.0))
+            headers["User-Agent"] = random.choice(USER_AGENTS)
+            r = await client.get(url, headers=headers)
+            if r.status_code == 403:
+                raise RuntimeError("OLX тимчасово обмежив доступ (403). Спробуйте через пару хвилин.")
+        r.raise_for_status()
+        return r.text
+    except Exception as e:
+        if "403" in str(e): raise RuntimeError("Блокування OLX (403). Зменшіть частоту запитів.")
+        raise RuntimeError(f"Помилка з'єднання: {str(e)}")
 
 def _build_search_url(query: str, seller_type: str, category: str, city_slug: str) -> str:
-    category_path = CATEGORY_PATHS.get(category, CATEGORY_PATHS["all"]).strip("/")
-    city_slug = city_slug.strip("/")
+    category_path = CATEGORY_PATHS.get(category, "list").strip("/")
     parts = [BASE_URL]
-    if category == "all" and city_slug: parts.append(city_slug)
+    if category == "all" and city_slug: parts.append(city_slug.strip("/"))
     else:
         parts.append(category_path)
-        if city_slug: parts.append(city_slug)
+        if city_slug: parts.append(city_slug.strip("/"))
     url = "/".join(part.strip("/") for part in parts) + f"/q-{quote(re.sub(r'\s+', '-', query.strip().lower()))}/"
     params = {}
     if seller_type in {"private", "business"}: params["search[private_business]"] = seller_type
@@ -290,39 +223,10 @@ def _resolve_city(city: str, city_query: str = "") -> dict:
     custom = city_query.strip()
     if custom:
         normalized = custom.lower()
-        slug = CITY_ALIASES.get(normalized) or _city_slug(custom)
-        tokens = tuple({normalized, slug, *re.split(r"[\s,-]+", normalized)})
-        return {"slug": slug, "tokens": tokens}
+        slug = CITY_ALIASES.get(normalized) or re.sub(r"[^a-z0-9]+", "-", normalized).strip("-")
+        return {"slug": slug, "tokens": (normalized, slug)}
     if city == "all": return {"slug": "", "tokens": ()}
     return {"slug": CITY_SLUGS.get(city, ""), "tokens": CITY_NAMES.get(city, ())}
-
-def _city_slug(value: str) -> str:
-    translit = {
-        "а": "a", "б": "b", "в": "v", "г": "g", "ґ": "g", "д": "d", "е": "e", "є": "e",
-        "ж": "zh", "з": "z", "и": "i", "і": "i", "ї": "i", "й": "y", "к": "k", "л": "l",
-        "м": "m", "н": "n", "о": "o", "п": "p", "р": "r", "с": "s", "т": "t", "у": "u",
-        "ф": "f", "х": "h", "ц": "ts", "ч": "ch", "ш": "sh", "щ": "sch", "ь": "", "ы": "y",
-        "э": "e", "ю": "yu", "я": "ya", "ъ": "",
-    }
-    text = "".join(translit.get(char, char) for char in value.lower())
-    return re.sub(r"[^a-z0-9]+", "-", text).strip("-")
-
-async def _enrich_listings(client: httpx.AsyncClient, listings: list[Listing]) -> list[Listing]:
-    if not listings: return []
-    return list(await asyncio.gather(*[_enrich_listing(client, l) for l in listings]))
-
-async def _enrich_listing(client: httpx.AsyncClient, listing: Listing) -> Listing:
-    try:
-        if listing.image and listing.price: return listing
-        html = await _download(client, listing.url)
-        detail = _detail_listing_from_next_data(html, listing.url)
-        price_text = (detail.price_text if detail else "") or _detail_price(html) or listing.price_text
-        price, currency = _parse_price(price_text)
-        image = (detail.image if detail else "") or _detail_image(html) or listing.image
-        seller_type = (detail.seller_type if detail else "") or _detail_seller_type(html) or listing.seller_type
-        return replace(listing, price_text=price_text, price=price, currency=currency,
-                       price_uah=await _convert_to_uah(price, currency), image=image, seller_type=seller_type)
-    except Exception: return listing
 
 def _extract_from_next_data(html: str) -> list[Listing]:
     data = _next_data(html)
@@ -337,21 +241,15 @@ def _extract_from_next_data(html: str) -> list[Listing]:
         price, currency = _parse_price(price_text)
         listings.append(Listing(title=title, price_text=price_text, price=price, currency=currency,
                                price_uah=None, url=url, image=_pick_image(item), location=_pick_location(item),
-                               date=str(item.get("createdTime") or item.get("lastRefreshTime") or item.get("date") or "").strip(),
+                               date=str(item.get("createdTime") or item.get("lastRefreshTime") or "").strip(),
                                seller_type=_pick_seller_type(item)))
     return listings
-
-def _detail_listing_from_next_data(html: str, url: str) -> Listing | None:
-    clean_url = _clean_listing_url(url)
-    for item in _extract_from_next_data(html):
-        if _clean_listing_url(item.url) == clean_url: return item
-    return None
 
 def _next_data(html: str) -> object | None:
     match = re.search(r'<script id="__NEXT_DATA__" type="application/json">(.*?)</script>', html, re.S)
     if not match: return None
     try: return json.loads(unescape(match.group(1)))
-    except json.JSONDecodeError: return None
+    except: return None
 
 def _walk_dicts(value: object) -> Iterable[dict]:
     if isinstance(value, dict):
@@ -362,7 +260,7 @@ def _walk_dicts(value: object) -> Iterable[dict]:
 
 def _walk_for_ads(value: object) -> Iterable[dict]:
     if isinstance(value, dict):
-        if value.get("title") and ("/obyavlenie/" in str(value.get("url") or value.get("href") or "")): yield value
+        if value.get("title") and ("/obyavlenie/" in str(value.get("url") or "")): yield value
         for child in value.values(): yield from _walk_for_ads(child)
     elif isinstance(value, list):
         for child in value: yield from _walk_for_ads(child)
@@ -382,41 +280,34 @@ def _price_candidate_to_text(candidate: object) -> str:
     return ""
 
 def _pick_location(item: dict) -> str:
-    for k in ("location", "cityName", "city", "regionName"):
+    for k in ("location", "cityName", "city"):
         c = item.get(k)
         if isinstance(c, dict):
-            text = " ".join(str(c.get(key) or "").strip() for key in ("name", "cityName", "regionName"))
-            if text.strip(): return re.sub(r"\s+", " ", text).strip()
+            text = " ".join(str(c.get(key) or "").strip() for key in ("name", "cityName"))
+            if text.strip(): return text.strip()
         elif c: return str(c).strip()
     return ""
 
 def _pick_image(item: dict) -> str:
-    for key in ("photos", "images", "gallery", "image", "photo", "thumbnail"):
+    for key in ("photos", "images", "gallery", "image", "photo"):
         image = _first_image_url(item.get(key))
         if image: return image
     return _first_image_url(item)
 
 def _first_image_url(value: object) -> str:
-    if isinstance(value, str) and _looks_like_image_url(value): return _normalize_image_url(value)
+    if isinstance(value, str) and "olxcdn.com" in value: return _normalize_image_url(value)
     if isinstance(value, list):
         for child in value:
             img = _first_image_url(child)
             if img: return img
     if isinstance(value, dict):
-        for key in ("link", "url", "src", "href", "original"):
+        for key in ("link", "url", "src"):
             img = _first_image_url(value.get(key))
             if img: return img
     return ""
 
-def _looks_like_image_url(value: str) -> bool:
-    v = _normalize_escaped_url(value)
-    return v.startswith(("http", "//")) and "olxcdn.com" in v
-
-def _normalize_escaped_url(value: str) -> str:
-    return unescape(value).strip().strip('"').strip("'").replace("\\/", "/").replace("&amp;", "&")
-
 def _normalize_image_url(value: str) -> str:
-    v = _normalize_escaped_url(value)
+    v = unescape(value).strip().strip('"').strip("'").replace("\\/", "/")
     return f"https:{v}" if v.startswith("//") else v
 
 def _pick_seller_type(item: dict) -> str:
@@ -426,45 +317,9 @@ def _pick_seller_type(item: dict) -> str:
         if is_bus is True: return "business"
         if is_bus is False: return "private"
     explicit = str(item.get("private_business") or item.get("sellerType") or "").lower()
-    if explicit in {"private", "person", "owner"}: return "private"
-    if explicit in {"business", "company", "shop"}: return "business"
+    if any(x in explicit for x in ("private", "person", "owner")): return "private"
+    if any(x in explicit for x in ("business", "company", "shop")): return "business"
     return "unknown"
-
-def _detail_price(html: str) -> str:
-    data = _next_data(html)
-    if data:
-        for item in _walk_dicts(data):
-            p = _pick_price_text(item)
-            if p and _parse_price(p)[0]: return p
-    match = re.search(r"\d[\d\s.,]{2,}\s*(?:грн|₴|uah|usd|eur|\$|€)", _strip_tags(html), re.I)
-    return match.group(0).strip() if match else ""
-
-def _detail_image(html: str) -> str:
-    data = _next_data(html)
-    return _first_image_url(data) if data else _fallback_image(html)
-
-def _detail_seller_type(html: str) -> str:
-    data = _next_data(html)
-    if data:
-        for item in _walk_dicts(data):
-            st = _pick_seller_type(item)
-            if st != "unknown": return st
-    return "business" if "бізнес" in html.lower() else "private" if "приват" in html.lower() else ""
-
-def _extract_fallback(html: str) -> list[Listing]:
-    listings, seen = [], set()
-    for match in re.finditer(r'href="([^"]*/(?:d/uk/)?obyavlenie/[^"]+)"', html):
-        url = _clean_listing_url(_absolute_url(unescape(match.group(1))))
-        if url in seen: continue
-        seen.add(url)
-        listings.append(Listing(title=_fallback_title(html[match.start():match.start()+5000]), 
-                               price_text=_fallback_price(html[match.start():match.start()+5000]),
-                               price=None, currency="UAH", price_uah=None, url=url, 
-                               image=_fallback_image(html[match.start():match.start()+5000]),
-                               location=_fallback_location(html[match.start():match.start()+5000]),
-                               date=_fallback_date(html[match.start():match.start()+5000]),
-                               seller_type="unknown"))
-    return listings
 
 def _fallback_title(block: str) -> str:
     m = re.search(r'alt="([^"]+)"', block) or re.search(r"<h[3-6][^>]*>(.*?)</h", block, re.S)
@@ -479,14 +334,7 @@ def _fallback_image(block: str) -> str:
     return _normalize_image_url(m.group(1)) if m else ""
 
 def _fallback_location(block: str) -> str:
-    for tokens in CITY_NAMES.values():
-        for t in tokens:
-            if t in block.lower(): return t.title()
-    return ""
-
-def _fallback_date(block: str) -> str:
-    m = re.search(rf"(сьогодні|вчора|\d{{1,2}}\s+(?:січня|лютого|травня|грудня))", _strip_tags(block), re.I)
-    return m.group(1).strip() if m else ""
+    return "" # Simplified
 
 def _fallback_description(html: str) -> str:
     m = re.search(r'data-testimonial-id="ad_description"[^>]*>(.*?)</div>', html, re.S) or \
@@ -561,27 +409,14 @@ async def _exchange_rates() -> dict[str, float]:
     now = asyncio.get_event_loop().time()
     if _RATES_CACHE and now < _RATES_EXPIRY: return _RATES_CACHE
     rates = {"USD": 41.5, "EUR": 45.0}
-    rates.update(await _privat_rates())
-    if set(rates) < {"USD", "EUR"}: rates.update(await _nbu_rates())
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            r = await client.get("https://api.privatbank.ua/p24api/pubinfo?exchange&coursid=5")
+            for i in r.json():
+                if i.get("ccy") in {"USD", "EUR"}: rates[i["ccy"]] = float(i["sale"])
+    except: pass
     _RATES_CACHE, _RATES_EXPIRY = rates, now + 3600
     return rates
-
-async def _privat_rates() -> dict:
-    try:
-        data = await _json_url("https://api.privatbank.ua/p24api/pubinfo?exchange&coursid=5", 8)
-        return {str(i["ccy"]): float(i["sale"]) for i in data if str(i.get("ccy")) in {"USD", "EUR"}}
-    except Exception: return {}
-
-async def _nbu_rates() -> dict:
-    try:
-        data = await _json_url("https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json", 8)
-        return {str(i["cc"]): float(i["rate"]) for i in data if str(i.get("cc")) in {"USD", "EUR"}}
-    except Exception: return {}
-
-async def _json_url(url: str, timeout: int) -> object:
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        r = await client.get(url, headers={"User-Agent": random.choice(USER_AGENTS)})
-        return r.json()
 
 def _format_money(amt: int | None, curr: str) -> str:
     if amt is None: return "Ціну не вказано"
@@ -589,7 +424,7 @@ def _format_money(amt: int | None, curr: str) -> str:
     return f"${v}" if curr == "USD" else f"€{v}" if curr == "EUR" else f"{v} ₴"
 
 def _absolute_url(url: str) -> str:
-    u = _normalize_escaped_url(url)
+    u = unescape(url).strip().strip('"').strip("'").replace("\\/", "/")
     if u.startswith("http"): return u
     return f"https://www.olx.ua{u if u.startswith('/') else '/' + u}"
 

@@ -459,15 +459,27 @@ const renderResults = (items) => {
     
     // Instead of direct links, we open our detail view
     const openBtn = (e) => {
-      e.preventDefault();
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
       openModal(item);
+      return false;
     };
 
-    node.querySelector(".result-card__media").onclick = openBtn;
-    node.querySelector(".result-card__title").onclick = openBtn;
-    node.querySelector(".result-card__link").onclick = openBtn;
+    // Remove href attributes to prevent browser-native navigation and replace with javascript:void(0)
+    const mediaLink = node.querySelector(".result-card__media");
+    const titleLink = node.querySelector(".result-card__title");
+    const actionLink = node.querySelector(".result-card__link");
+
+    [mediaLink, titleLink, actionLink].forEach(el => {
+      el.href = "javascript:void(0)";
+      el.onclick = openBtn;
+      // Add a secondary event listener just in case
+      el.addEventListener("click", openBtn);
+    });
     
-    node.querySelector(".result-card__title").textContent = item.title;
+    titleLink.textContent = item.title;
     node.querySelector(".result-card__meta").textContent = [item.location, item.date].filter(Boolean).join(" • ");
     
     const seller = node.querySelector(".result-card__seller");
