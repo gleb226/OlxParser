@@ -107,16 +107,36 @@ async def search_olx(
 
     async with httpx.AsyncClient(timeout=18, follow_redirects=True) as client:
         try:
-            html = await _download(client, _build_search_url(query.strip(), seller_type, category, city_filter["slug"]))
-        except RuntimeError:
+            url = _build_search_url(query.strip(), seller_type, category, city_filter["slug"])
+            print(f"DEBUG: Searching URL: {url}")
+            html = await _download(client, url)
+        except RuntimeError as e:
+            print(f"DEBUG: Search failed: {e}")
             if category == "all" and not city_filter["slug"]: raise
-            try: html = await _download(client, _build_search_url(query.strip(), seller_type, "all", city_filter["slug"]))
-            except RuntimeError: html = await _download(client, _build_search_url(query.strip(), seller_type, category, ""))
+            url = _build_search_url(query.strip(), seller_type, "all", city_filter["slug"])
+            html = await _download(client, url)
 
-        listings = _extract_from_next_data(html) or _extract_fallback(html)
-        # ENRICHMENT REMOVED during search for maximum speed and to avoid 403 blocks
+        listings = _extract_from_next_data(html)
+        print(f"DEBUG: NEXT_DATA found {len(listings)} items")
+        
+        if not listings and category != "all":
+            try:
+                url = _build_search_url(query.strip(), seller_type, "all", city_filter["slug"])
+                print(f"DEBUG: 0 items. Trying global search: {url}")
+                html = await _download(client, url)
+                listings = _extract_from_next_data(html)
+            except: pass
+
+        if not listings:
+            listings = _extract_fallback(html)
+            print(f"DEBUG: Fallback found {len(listings)} items")
     
-    listings = _filter_by_category_url(listings, category)
+    if not listings:
+        print(f"DEBUG: Still 0 items. HTML length: {len(html)}. Start: {html[:200]}")
+
+    for item in listings:
+        item.price_uah = await _convert_to_uah(item.price, item.currency)
+
     listings = _filter_by_relevance(listings, query, category)
     listings = _filter_by_city(listings, city_filter["tokens"])
 
@@ -128,11 +148,9 @@ async def search_olx(
     reverse = sort == "desc"
     filtered.sort(key=lambda x: x.price_uah if x.price_uah is not None else (10**12 if not reverse else -1), reverse=reverse)
     
-    results = []
-    for item in filtered[:limit]:
-        if item.price_uah is None: item.price_uah = await _convert_to_uah(item.price, item.currency)
-        results.append(await _format_listing(item, price_currency))
-    return results
+    return [await _format_listing(item, price_currency) for item in filtered[:limit]]
+    
+    return [await _format_listing(item, price_currency) for item in filtered[:limit]]
 
 async def get_listing_details(url: str) -> dict:
     async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
