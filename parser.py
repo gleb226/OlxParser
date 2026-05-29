@@ -177,6 +177,13 @@ async def get_listing_details(url: str) -> dict:
         "url": url
     }
 
+def parse_optional_price(value: str | None) -> int | None:
+    if value is None: return None
+    cleaned = re.sub(r"\s+", "", value.strip())
+    if cleaned in {"", "-"}: return None
+    if not cleaned.isdigit(): raise ValueError("Ціна має бути числом.")
+    return int(cleaned)
+
 async def _download(client: httpx.AsyncClient, url: str) -> str:
     # Use randomized delays and full set of browser headers to bypass CloudFront 403
     await asyncio.sleep(random.uniform(0.4, 1.2))
