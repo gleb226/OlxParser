@@ -632,3 +632,228 @@ button, input, select {
   .app { height: auto; overflow: visible; }
   html, body { overflow-y: auto; height: auto; }
 }
+
+/* Modal Styles */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(6, 16, 15, 0.92);
+  backdrop-filter: blur(12px);
+}
+
+.modal--open {
+  display: flex;
+}
+
+.modal__content {
+  position: relative;
+  width: min(960px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 50px 100px rgba(0, 0, 0, 0.8);
+  animation: modalIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(15px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal__close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.modal__close:hover {
+  background: var(--rose);
+  transform: rotate(90deg);
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 40px;
+  padding: 40px;
+}
+
+@media (max-width: 850px) {
+  .detail { grid-template-columns: 1fr; padding: 24px; gap: 24px; }
+}
+
+.detail__gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail__main-img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  border-radius: 16px;
+  background: #000;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.detail__thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+}
+
+.detail__thumb {
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.2s;
+}
+
+.detail__thumb:hover, .detail__thumb--active {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.detail__info {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.detail__title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #fff;
+}
+
+.detail__pricebox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail__price {
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--lime);
+}
+
+.detail__original-price {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.detail__desc {
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  opacity: 0.9;
+}
+
+.detail__section-title {
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+.detail__params {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.detail__param {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail__param-label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.detail__param-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.detail__actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  border: 0;
+}
+
+.btn--primary {
+  background: linear-gradient(135deg, var(--lime), var(--teal));
+  color: var(--ink);
+  flex: 1;
+}
+
+.btn--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(200, 255, 74, 0.25);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--line) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: skeletonLoad 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes skeletonLoad {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}

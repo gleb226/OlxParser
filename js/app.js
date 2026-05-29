@@ -342,6 +342,104 @@ const renderRecent = () => {
   });
 };
 
+const detailModal = document.querySelector("#detailModal");
+const closeModalBtn = document.querySelector("#closeModal");
+const modalBody = document.querySelector("#modalBody");
+
+const currencySymbols = {
+  UAH: "₴",
+  USD: "$",
+  EUR: "€"
+};
+
+const openModal = async (item) => {
+  detailModal.classList.add("modal--open");
+  detailModal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  
+  modalBody.innerHTML = `
+    <div class="detail">
+      <div class="detail__gallery">
+        <div class="detail__main-img skeleton"></div>
+        <div class="detail__thumbs"></div>
+      </div>
+      <div class="detail__info">
+        <div class="skeleton" style="height: 32px; width: 80%"></div>
+        <div class="skeleton" style="height: 48px; width: 40%"></div>
+        <div class="skeleton" style="height: 100px; width: 100%"></div>
+      </div>
+    </div>
+  `;
+
+  try {
+    const base = await findApiBase();
+    const response = await fetch(`${base}/api/details?url=${encodeURIComponent(item.url)}`);
+    const data = await response.json();
+    
+    if (!response.ok) throw new Error(data.detail || "Помилка завантаження деталей");
+
+    const images = data.images && data.images.length ? data.images : [item.image];
+    
+    modalBody.innerHTML = `
+      <div class="detail">
+        <div class="detail__gallery">
+          <img class="detail__main-img" src="${imageSource(images[0])}" alt="${data.title}">
+          <div class="detail__thumbs">
+            ${images.map((img, i) => `
+              <img class="detail__thumb ${i === 0 ? 'detail__thumb--active' : ''}" 
+                   src="${imageSource(img)}" 
+                   onclick="document.querySelector('.detail__main-img').src=this.src; 
+                            document.querySelectorAll('.detail__thumb').forEach(t=>t.classList.remove('detail__thumb--active'));
+                            this.classList.add('detail__thumb--active')">
+            `).join('')}
+          </div>
+        </div>
+        <div class="detail__info">
+          <div class="detail__pricebox">
+            <h2 class="detail__title">${data.title}</h2>
+            <div class="detail__price">${item.display_price_text}</div>
+            ${item.original_price_text !== item.display_price_text ? `<div class="detail__original-price">${item.original_price_text}</div>` : ''}
+          </div>
+          
+          <div class="detail__section">
+            <h3 class="detail__section-title">Характеристики</h3>
+            <div class="detail__params">
+              ${data.parameters && data.parameters.length ? data.parameters.map(p => `
+                <div class="detail__param">
+                  <span class="detail__param-label">${p.label}</span>
+                  <span class="detail__param-value">${p.value}</span>
+                </div>
+              `).join('') : '<p class="detail__desc">Характеристики не вказані</p>'}
+            </div>
+          </div>
+
+          <div class="detail__section">
+            <h3 class="detail__section-title">Опис</h3>
+            <div class="detail__desc">${data.description}</div>
+          </div>
+
+          <div class="detail__actions">
+            <a href="${item.url}" target="_blank" rel="noopener noreferrer" class="btn btn--primary">
+              Перейти на OLX
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+  } catch (err) {
+    modalBody.innerHTML = `<div class="detail"><p class="detail__desc">Помилка: ${err.message}</p></div>`;
+  }
+};
+
+const closeModal = () => {
+  detailModal.classList.remove("modal--open");
+  detailModal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+};
+
+closeModalBtn.onclick = closeModal;
+detailModal.onclick = (e) => { if (e.target === detailModal) closeModal(); };
+
 const renderResults = (items) => {
   results.innerHTML = "";
   if (!items.length) {
@@ -357,9 +455,18 @@ const renderResults = (items) => {
 
   items.forEach((item) => {
     const node = template.content.cloneNode(true);
-    node.querySelector(".result-card__media").href = item.url;
-    node.querySelector(".result-card__title").href = item.url;
-    node.querySelector(".result-card__link").href = item.url;
+    const card = node.querySelector(".result-card");
+    
+    // Instead of direct links, we open our detail view
+    const openBtn = (e) => {
+      e.preventDefault();
+      openModal(item);
+    };
+
+    node.querySelector(".result-card__media").onclick = openBtn;
+    node.querySelector(".result-card__title").onclick = openBtn;
+    node.querySelector(".result-card__link").onclick = openBtn;
+    
     node.querySelector(".result-card__title").textContent = item.title;
     node.querySelector(".result-card__meta").textContent = [item.location, item.date].filter(Boolean).join(" • ");
     
@@ -367,7 +474,7 @@ const renderResults = (items) => {
     seller.textContent = labels.seller[item.seller_type] || "Автор";
     seller.dataset.type = item.seller_type;
     
-    node.querySelector(".result-card__currency").textContent = item.currency;
+    node.querySelector(".result-card__currency").textContent = currencySymbols[item.currency] || item.currency;
     node.querySelector(".result-card__price").textContent = item.display_price_text;
 
     const details = [];
